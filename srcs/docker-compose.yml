@@ -1,0 +1,189 @@
+
+version: "3.8"
+services:
+
+  mariadb:
+    build: ./requirements/mariadb
+    container_name: mariadb
+    image: mariadb:inception
+    environment:
+      - SQL_DB=${SQL_DB}
+    secrets:
+      - db_root_pass
+      - db_pass
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes: 
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - inception
+    restart: on-failure
+
+  redis:
+    build: ./requirements/bonus/redis
+    container_name: redis
+    image: redis:inception
+    networks:
+      - inception
+    restart: on-failure
+
+  wordpress:
+    build: ./requirements/wordpress
+    container_name: wordpress
+    image: wordpress:inception
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      - SQL_DB=${SQL_DB}
+      - SQL_USER=${SQL_USER}
+      - DOMAIN_NAME=${DOMAIN_NAME}
+      - WP_TITLE=${WP_TITLE}
+    secrets:
+      - wp_admin
+      - wp_admin_pass
+      - wp_admin_email
+      - wp_user
+      - wp_user_pass
+      - wp_user_email
+      - db_pass
+    volumes:
+      - wordpress_data:/var/www/html
+    networks:
+      - inception
+    restart: on-failure
+
+  nginx: 
+    build: ./requirements/nginx
+    container_name: nginx
+    image: nginx:inception
+    depends_on:
+      - wordpress
+    environment:
+      - DOMAIN_NAME=${DOMAIN_NAME}
+    ports:
+      - "443:443"
+    volumes:
+      - wordpress_data:/var/www/html
+      - ssl_certificate:/etc/nginx/ssl
+      - adminer_data:/var/www/adminer
+      - portainer_data:/data
+    networks:
+      - inception
+    restart: on-failure
+   
+  ftp:
+    build: ./requirements/bonus/ftp
+    container_name: ftp
+    image: ftp:inception
+    depends_on:
+      - wordpress
+      - nginx
+    ports:
+      - "21:21"
+      - "21100-21110:21100-21110"
+    volumes:
+      - wordpress_data:/var/www/html
+      - ssl_certificate:/etc/nginx/ssl
+    networks:
+      - inception
+    secrets:
+      - wp_admin
+      - wp_admin_pass
+    restart: on-failure
+
+  static:
+    build: ./requirements/bonus/static
+    container_name: static
+    image: static:inception
+    depends_on:
+      - nginx
+    networks:
+      - inception
+    restart: on-failure
+
+  adminer:
+    build: ./requirements/bonus/adminer
+    container_name: adminer
+    image: adminer:inception
+    depends_on:
+      - nginx
+    networks:
+      - inception
+    volumes:
+      - adminer_data:/var/www/adminer
+    restart: on-failure
+  
+  portainer:
+    build: ./requirements/bonus/portainer
+    container_name: portainer
+    image: portainer:inception
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    networks:
+      - inception
+    secrets:
+      - portainer_pass
+    restart: on-failure
+
+volumes:
+  mariadb_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/${LOGIN}/data/mariadb
+  wordpress_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/${LOGIN}/data/wordpress
+  ssl_certificate:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/${LOGIN}/data/ssl
+  adminer_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/${LOGIN}/data/adminer
+  portainer_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/${LOGIN}/data/portainer
+
+networks:
+  inception:
+    driver: bridge
+
+secrets:
+  db_pass:
+    file: ./../secrets/db_pass.txt
+  db_root_pass:
+    file: ./../secrets/db_root_pass.txt
+  wp_admin:
+    file: ./../secrets/wp_admin.txt
+  wp_admin_pass:
+    file: ./../secrets/wp_admin_pass.txt
+  wp_admin_email:
+    file: ./../secrets/wp_admin_email.txt
+  wp_user:
+    file: ./../secrets/wp_user.txt
+  wp_user_pass:
+    file: ./../secrets/wp_user_pass.txt
+  wp_user_email:
+    file: ./../secrets/wp_user_email.txt
+  portainer_pass:
+    file: ./../secrets/portainer_pass.txt
