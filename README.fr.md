@@ -72,7 +72,18 @@ Docker Compose permet de :
 
 ### 🌐 Concept : Bridge Network vs DNS Interne
 
-* **Host Network** : Le conteneur partage l'adresse IP et l'espace réseau de la machine hôte. Aucune isolation réseau.
+* **Réseau Hôte (NAT)** : 🔌 Redirection de ports (Hôte -> VM -> Docker)
+Pour accéder aux services depuis la machine hôte, une couche spécifique de redirection de ports est configurée :
+
+| Service | Port Externe (Hôte) | Port Interne (Conteneur) | Utilité |
+| :--- | :--- | :--- | :--- |
+| **SSH** | `4242` | `22` | Accès distant à la VM (VS Code / Terminal) |
+| **NGINX** | `443` | `443` | Accès Web (HTTPS) pour tous les services web |
+| **FTP** | `21` | `21` | Commandes de contrôle FTP (FTPS) |
+| **Données FTP** | `21100-21110` | `21100-21110` | Transfert de fichiers (Mode Passif) |
+
+En raison des restrictions réseau sur les ordinateurs de l'école, nous ne pouvions pas choisir le mode bridge pour l'hôte ; mais sur un projet privé, si l'hôte est en bridge, le conteneur partage l'adresse IP et l'espace réseau de la machine hôte. Aucune isolation réseau.
+
 * **Docker Network (Bridge)** : *Utilisé dans ce projet.* Crée un réseau virtuel privé.
     * **Isolation** : Les conteneurs ne sont pas accessibles de l'extérieur sauf si des ports sont explicitement publiés.
     * **DNS Interne** : Docker résout automatiquement les noms de services. Le service `wordpress` peut communiquer avec la base de données simplement en utilisant l'hôte `mariadb` (pas d'IP à gérer). Si un service est nommé `mariadb`, tout autre conteneur sur le même réseau peut le contacter via le nom `mariadb` au lieu d'une adresse IP instable.

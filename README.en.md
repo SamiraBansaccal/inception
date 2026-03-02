@@ -72,9 +72,20 @@ Docker Compose allows you to:
 
 ## C. Networking: Isolation and Communication 🌐
 
-### 📡 Concept: Bridge Network vs. Internal DNS
+### 📡 Concept: NAT Host, Bridge Docker Network & Internal Docker DNS
 
-* **Host Network**: The container shares the IP address and network space of the host machine. No network isolation.
+* **Host Network (NAT)**: 🔌 Port Forwarding (Host -> VM -> Docker)
+To access the services from the host machine, a specific port forwarding layer is configured:
+
+| Service | External Port (Host) | Internal Port (Container) | Purpose |
+| :--- | :--- | :--- | :--- |
+| **SSH** | `4242` | `22` | Remote access to the VM (VS Code / Terminal) |
+| **NGINX** | `443` | `443` | Web access (HTTPS) for all web services |
+| **FTP** | `21` | `21` | FTP Control commands (FTPS) |
+| **FTP Data** | `21100-21110` | `21100-21110` | File transfer (Passive Mode) |
+
+Because of network restriction on the school computers, we could not chose bridge for the host but on a private project, if the host is on bridge, the container shares the IP address and network space of the host machine. No network isolation.
+
 * **Docker Network (Bridge)**: *Used in this project.* Creates a private virtual network.
     * **Isolation**: Containers are not accessible from the outside unless ports are explicitly published.
     * **Internal DNS**: Docker automatically resolves service names. The `wordpress` service can communicate with the database simply by using the host `mariadb` (no IP to manage). If a service is named `mariadb`, any other container on the same network can contact it via the name `mariadb` instead of an unstable IP address.
