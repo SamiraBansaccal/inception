@@ -29,8 +29,8 @@ $(NAME): setup_env setup_secrets setup_dirs
 setup_env:
 	@if [ ! -f srcs/.env ]; then \
 		echo "Creating srcs/.env..."; \
-		echo "WP_TITLE=\"Inception\"" >> srcs/.env; \
-		echo "SQL_DB=wordpress" > srcs/.env; \
+		echo "WP_TITLE=Inception" >> srcs/.env; \
+		echo "SQL_DB=wordpress" >> srcs/.env; \
 		echo "SQL_USER=wp_user" >> srcs/.env; \
 		echo "LOGIN=$(USER)" >> srcs/.env; \
 		echo "DOMAIN_NAME=$(USER).42.fr" >> srcs/.env; \
