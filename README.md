@@ -1,5 +1,5 @@
 # 🏗️ Inception - Docker Infrastructure Project
-
+This project has been created as part of the 42 curriculum
 # I. Description: General 🌐
 
 The **Inception** project aims to design and deploy a complete web infrastructure using Docker exclusively as the containerization technology. This project implements a classic modern web infrastructure stack and aims to introduce the fundamental principles of microservices architectures.
